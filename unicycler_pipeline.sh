@@ -3,14 +3,23 @@
 # Created on Sunday Feb 7, 2021
 # @author: ivanmugu
 #
-# Accessing folders and subfolders to retrieve information from files
-# that contain Illumina and ONP reads to run unicycler
 #
+# Accessing folders and subfolders to retrieve information from files that
+# contain Illumina and ONP reads to run unicycler.py. After running unicycler,
+# the script will run log_parser.py and fasta_extractor.py. The log_parser.py
+# program will get important information from the tables inside unicycler.log 
+# file. The fasta_extractor.py will extract the individual fasta sequences
+# generated inside assembly.fasta.
+#
+# TODO: to finish including log_parser and fasta_extractor in the code
+#
+
 # Function to print usage
 # Does not get arguments
 usage () {
   echo "usage: $0 [-h HELP] -i input_folder -o output_folder"
 }
+
 # Function to print help
 # Does not get arguments
 printHelp () {
@@ -45,6 +54,7 @@ printHelp () {
   printf "Usage example:\n"
   printf "pepito$ ./unicycler_pipeline.sh -i ~/Documents/input -o ~/Documents/output\n\n"
 }
+
 # Function to run unicycler
 # Arguments
 # --------
@@ -82,13 +92,33 @@ runUnicycler () {
       # Creating directory to save output of unicycler. The name of the directory in
       # the output folder will be the same as in the input folder
       mkdir ./$output/$folder
+      
       # Running unicycler
       echo "Running unicycler with files from folder: $folder"
       unicycler -1 ./$input/$folder/$forward -2 ./$input/$folder/$reverse \
-        -l ./$input/$folder/$long -t 32 -o ./$output/$folder
+        -l ./$input/$folder/$long -t 32 --mode bold -o ./$output/$folder
+      
+      # Extracting tables from unicycler.log file
+      # In this case, the input directory (-i) corresponds to the output
+      # directory created to put the results of unicycler. We want to ananlyze
+      # the files created in the output directory for unicycler. The results
+      # are going to be put in the same directory. Therefore, output directory
+      # (-o) is the same path as input directory (-i)
+      echo "Extracting tables from unicycler.log"
+      python3 log_parser.py -i ./$output/$folder -o ./$output/$folder
+
+      # Extracting fasta sequences from assembly.fasta
+      # -n means name of input fasta file and -d means path do input directory.
+      # Because assembly.fasta is created in the output directory after running
+      # unicycler, the input directory (-d) is going to the output directory of
+      # unicycler.
+      echo "Extracting fasta sequences from assembly.fasta"
+      python3 fasta_extractor.py -n assembly.fasta -d ./$output/$folder 
+
       echo "Done"
   done
 }
+
 # Cheking provided arguments and getting inputFolder and outputFolder variables
 # Arguments
 # --------
@@ -132,17 +162,21 @@ parseArguments () {
   else
     echo "input_folder and output_folder exist"
   fi
+ 
   # Checking if paths to input and output folders have correct format
+  #
+  # Getting lengh of input and output path
   lenInput=${#inputFolder}
   lenOutput=${#outputFolder}
+  # Getting the last character if input and output path
   lastCharInput=${inputFolder:lenInput - 1:1}
   lastCharOutput=${outputFolder:lenOutput - 1:1}
-  # Checking format input folder
+  # Checking format of input folder
   if [[ ! $lastCharInput = "/" ]]
   then
     inputFolder="${inputFolder}/"
   fi
-  # Checking format output folder
+  # Checking format of output folder
   if [[ ! $lastCharOutput = "/" ]]
   then
     outputFolder="${outputFolder}/"
@@ -150,6 +184,7 @@ parseArguments () {
   echo "Path input folder:  $inputFolder"
   echo "Path output folder: $outputFolder"
 }
+
 # main function
 # Arguments
 # ---------
@@ -160,4 +195,5 @@ main () {
   echo "Done!"
 }
 
+# Running the script
 main $@

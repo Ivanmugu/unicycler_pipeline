@@ -89,33 +89,13 @@ runUnicycler () {
             continue
           fi
       done
-      # Creating directory to save output of unicycler. The name of the directory in
-      # the output folder will be the same as in the input folder
+      # Creating directory to save output of unicycler. The name of the
+      # directory in the output folder will be the same as in the input folder
       mkdir ./$output/$folder
-      
       # Running unicycler
       echo "Running unicycler with files from folder: $folder"
       unicycler -1 ./$input/$folder/$forward -2 ./$input/$folder/$reverse \
         -l ./$input/$folder/$long -t 32 --mode bold -o ./$output/$folder
-      
-      # Extracting tables from unicycler.log file
-      # In this case, the input directory (-i) corresponds to the output
-      # directory created to put the results of unicycler. We want to ananlyze
-      # the files created in the output directory for unicycler. The results
-      # are going to be put in the same directory. Therefore, output directory
-      # (-o) is the same path as input directory (-i)
-      echo "Extracting tables from unicycler.log"
-      python3 log_parser.py -i ./$output/$folder -o ./$output/$folder
-
-      # Extracting fasta sequences from assembly.fasta
-      # -n means name of input fasta file and -d means path do input directory.
-      # Because assembly.fasta is created in the output directory after running
-      # unicycler, the input directory (-d) is going to the output directory of
-      # unicycler.
-      echo "Extracting fasta sequences from assembly.fasta"
-      python3 fasta_extractor.py -n assembly.fasta -d ./$output/$folder 
-
-      echo "Done"
   done
 }
 
@@ -190,9 +170,31 @@ parseArguments () {
 # ---------
 # $@ : all the arguments provided in the command line
 main () {
+  # Getting user input
   parseArguments $@
+
+  # Running unicycler
+  printf "\nRunning unicycler\n"
   runUnicycler $inputFolder $outputFolder
-  echo "Done!"
+
+  # Extracting tables from unicycler.log file
+  # log_parser.py will loop over the folders inside outputFolder to parse the 
+  # generated unicycler.log file in each assembly. Therefore, in this case,
+  # the path the input folder for log_parser must be the path to output folder
+  # of the runUnicycler function. For more information print the help of
+  # log_parser.py
+  printf "\nExtracting tables from unicycler.log\n"
+  python3 log_parser.py -i $outputFolder -o $outputFolder
+
+  # Extracting fasta sequences from assembly.fasta
+  # -n means name of input fasta file and -d means path do input directory.
+  # Because assembly.fasta is created in the output directory after running
+  # unicycler, the input directory (-d) is going to the output directory of
+  # unicycler.
+  printf "\nExtracting fasta sequences from assembly.fasta\n"
+  python3 fasta_extractor.py -n assembly.fasta -d $outputFolder
+
+  echo "unicycler_pipeline is done!"
 }
 
 # Running the script

@@ -5,7 +5,7 @@
 # File name:          unicycler_pipeline.sh
 # Author:             Ivan Munoz Gutierrez
 # Date created:       02/07/2021
-# Date last modified: 02/19/2021
+# Date last modified: 04/01/2021
 # Description:        Process Illumina and ONP reads using Unicycler. This
 #                     script needs log_parser.py and fasta_extractor.py.
 #                     For more details refer to the HELP heredoc.
@@ -257,18 +257,17 @@ function main() {
   # ------------------------------------------------------------------------
   # Extracting fasta sequences from assembly.fasta using fasta_extractor.py.
   # Flags:
-  #   -n : name of input fasta file.
-  #   -i : path to input folder.
+  #   -i : path to input folder and name of fasta file to be processed.
   #   -o : path to output folder. This flag is optional. If it is not provided
   #        the extracted fasta files will be saved in the same folder that
   #        contains the assembly.fasta used for the extraction.
   # ------------------------------------------------------------------------
   printf "\nExtracting fasta sequences from assembly.fasta\n"
-  python3 fasta_extractor.py -n assembly.fasta -i $outputFolder
+  python3 fasta_extractor.py -i $outputFolder assembly.fasta
 
   # Make a folder to save a copy of all extracted fasta files
   mkdir $outputFolder/assemblies
-  python3 fasta_extractor.py -n assembly.fasta -i $outputFolder \
+  python3 fasta_extractor.py -i $outputFolder assembly.fasta\
   -o $outputFolder/assemblies 
 
   echo "unicycler_pipeline is done!"
